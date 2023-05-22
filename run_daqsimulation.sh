@@ -1,7 +1,7 @@
 #!/bin/bash
 envs=/home/users/bdillon/pone_offline/env-shell_Container.sh
 infile=/home/users/bdillon/P-ONE/sim0001/photonprop/GenerateSingleMuons_*.i3.gz
-pyfile=/home/users/bdillon/P-ONE/sim0001/src/DAQSim.py
+pyfile=/home/users/bdillon/P-ONE/sim0001/src_sim/DAQSim.py
 gcd=/home/users/bdillon/P-ONE/sim0001/gcdfile/PONE_10String_7Cluster_standard.i3.gz
 outfile=/home/users/bdillon/P-ONE/sim0001/daqsim
 for file in $infile
