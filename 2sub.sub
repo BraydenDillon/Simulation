@@ -1,0 +1,11 @@
+Universe  = vanilla
+executable = npx3-execs/npx3-89291.sh
+log = npx3-logs/npx3-89291.log
+output = npx3-out/npx3-89291.out
+error = npx3-error/npx3-89291.error
++SingularityImage = "/data/p-one/icetray_offline_june24_2022.sif"
+request_cpus = 1
+request_memory = 4GB
+requirements = HasSingularity
+notification = never
+queue
