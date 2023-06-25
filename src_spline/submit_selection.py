@@ -15,7 +15,7 @@ job_string = '''#!/bin/bash
 
 eval `/cvmfs/icecube.opensciencegrid.org/py3-v4.1.1/setup.sh`
 
-bash /data/p-one/twagiray/trackreco/common_variables/env-shell.sh python {}/get_mmsreco_hdfdata.py -i {} -o {} -r $1 -g {}
+bash /data/p-one/twagiray/trackreco/common_variables/env-shell.sh python {}/make_ldir_selection.py -i {} -o {} -r $1 -g {}
 
 '''.format(opts["job"],
            opts["data"]+"/SingleMuon_",
