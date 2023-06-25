@@ -19,24 +19,34 @@ from segments.GenerateCosmicRayMuons import GenerateSingleMuons
 from segments import PropagateMuons
 from Utilities.GeoUtility import get_geo_from_gcd
 
-parser = argparse.ArgumentParser()
+import os
+from os.path import expandvars
+import numpy as np
+import argparse
+
+parser = argparse.ArgumentParser(description = "A scripts to run the neutrino generation simulation step using Neutrino Generator")
+
 parser.add_argument("-o", "--outfile", type=str, default="MuonGunSingleMuons_", help="")
-parser.add_argument("-r", "--run", type=int, default=0, help="")
+parser.add_argument("-r", "--runnumber", type=int, default="1", 
+                    help="The run/dataset number for this simulation, is used as seed for random generator")
 parser.add_argument("-g", "--gcdfile", default=os.getenv('PONESRCDIR') +
                     "/GCD/PONE_10String_7Cluster.i3.gz", help="Readin GCD file")
-parser.add_argument("-n", "--nevents", type=int, default=10, help="Number of events to run.")
+parser.add_argument("-n", "--numEvents", type=int, default=10, help="Number of events to run.")
 
 args = parser.parse_args()
+
+numEvents = int(args.numEvents)
 
 cylinder_radius, cylinder_length = get_geo_from_gcd(args.gcdfile)
 
 tray = I3Tray()
 tray.AddModule('I3InfiniteSource', Prefix=args.gcdfile)
 
+# Now fire up the random number generator with that seed
 randomService = phys_services.I3SPRNGRandomService(
-    seed=args.run*args.run,
-    nstreams=100000000,
-    streamnum=args.run)
+                seed = int(args.runnumber),
+               nstreams = int(4e7),
+                streamnum = int(args.runnumber))
 
 tray.context['I3RandomService'] = randomService
 
@@ -54,7 +64,7 @@ tray.AddSegment(GenerateSingleMuons, "makeMuons",
                 Surface=None,  #surface
                 GCDFile=args.gcdfile,
                 GeometryMargin=60.*I3Units.m,
-                NumEvents=args.nevents,
+                NumEvents=args.numEvents,
                 FromEnergy=100.*I3Units.GeV,
                 ToEnergy=1.*I3Units.PeV,
                 BreakEnergy=1.*I3Units.TeV,
@@ -69,8 +79,19 @@ tray.Add(PropagateMuons, 'ParticlePropagators',
          OutputMCTreeName="I3MCTree",
          PROPOSAL_config_file=os.getenv('PONESRCDIR')+"/configs/PROPOSAL_config.json")
 
-tray.AddModule('I3Writer', 'writer',
-               Streams=[icetray.I3Frame.DAQ, icetray.I3Frame.TrayInfo],
-               filename=args.outfile)
+event_id = 1
+def get_header(frame):
+    global event_id 
+    header          = icecube.dataclasses.I3EventHeader()
+    header.event_id = event_id
+    header.run_id   = int(args.runnumber)
+    frame.Delete("I3EventHeader")
+    frame["I3EventHeader"] = header
+    event_id += 1
+tray.AddModule(get_header, streams = [icetray.I3Frame.DAQ])
+
+tray.Add("I3Writer", filename = args.outfile+"_"+str(args.runnumber)+".i3.gz",
+        streams = [icetray.I3Frame.TrayInfo, icetray.I3Frame.DAQ],)
+
 tray.Execute()
 tray.Finish()

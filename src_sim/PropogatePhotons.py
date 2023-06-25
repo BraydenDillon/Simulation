@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 
 """
 
@@ -15,45 +16,54 @@ from icecube import clsim
 import WaterOpticalModel.MakePoneMediumPropertiesSpeculativeExtendedRange as Medium
 from Utilities.DOMUtility import DOMProperties
 
-parser = argparse.ArgumentParser(
-    description="Takes I3Photons from step2 of the simulations and generates DOM hits")
-parser.add_argument("-i", "--infile", default="./test_input.i3",
+parser = argparse.ArgumentParser(description = "Takes I3Photons from step2 of the simulations and generates DOM hits")
+parser.add_argument("-i", "--infile",default="./test_input.i3", 
                     help="Write output to OUTFILE (.i3{.gz} format)")
-parser.add_argument("-o", "--outfile", default="./test_output.i3",
+parser.add_argument("-o", "--outfile",default="./test_output.i3", 
                     help="Write output to OUTFILE (.i3{.gz} format)")
-parser.add_argument("-r", "--runnumber", type=int, default=1,
+parser.add_argument("-r", "--runnumber", type=int, default=1, 
                     help="The run/dataset number for this simulation, is used as seed for random generator")
-parser.add_argument("-l", "--filenr", type=int, default=1,
+parser.add_argument("-l", "--filenr",type=int, default=1, 
                     help="File number, stream of I3SPRNGRandomService")
-parser.add_argument("-g", "--gcdfile", default=os.getenv('PONESRCDIR') +
-                    "/GCD/PONE_10String_7Cluster.i3.gz", help="Read in GCD file")
-parser.add_argument("-e", "--efficiency", type=float, default=1.0,
+parser.add_argument("-g", "--gcdfile", default='PONE_10String_7Cluster_baseline.i3.gz', help="Read in GCD file")
+parser.add_argument("-e", "--efficiency", type=float,default=1.0,
                     help="DOM Efficiency ... the same as UnshadowedFraction")
 parser.add_argument("-m", "--mctree", default="I3MCTree", help="I3MCTree to go into clsim")
-parser.add_argument("-c", "--crossenergy", type=float, default=200.0,
+parser.add_argument("-c", "--crossenergy", type=float,default=200.0, 
                     help="The cross energy where the hybrid clsim approach will be used")
-parser.add_argument("-f", "--frames", type=int, default=100, help="N Frames")
 args = parser.parse_args()
+count = 0
+CPU=False
 
 # load DOM properties
 dom_properties = DOMProperties()
 
 photon_series = "I3Photons"
-
+#print 'CUDA devices: ', options.DEVICE
 tray = I3Tray()
 
 # Now fire up the random number generator with that seed
-# from globals import max_num_files_per_dataset
 randomService = phys_services.I3SPRNGRandomService(
-    seed=int(args.runnumber),
-    nstreams=int(4e7),
-    streamnum=int(args.runnumber))
+                seed = int(args.runnumber),
+               nstreams = int(4e7),
+                streamnum = int(args.runnumber))
 
 tray.context['I3RandomService'] = randomService
 
+outfile = args.outfile +str(args.runnumber)+".i3.gz"
+
+infile = args.infile + str(args.runnumber)+".i3.gz"
+
+#gcd_file = dataio.I3File(args.gcdfile)
+print(args.gcdfile)
+
 tray.AddModule('I3Reader', 'reader',
-               FilenameList=[args.infile]
-               )
+            FilenameList = [infile]
+            )
+
+#tray.AddModule('I3Reader', 'reader',
+#            FilenameList = [args.gcdfile,infile]
+#            )
 
 tray.AddSegment(clsim.I3CLSimMakePhotons, 'goCLSIM',
                 # UseCPUs=True,
@@ -76,16 +86,21 @@ tray.AddSegment(clsim.I3CLSimMakePhotons, 'goCLSIM',
                     factor=dom_properties.GetMaxAngularAcceptance()*1.05),
                 DOMOversizeFactor=1.0,  # (17./13.),
                 UnshadowedFraction=1.,  # normal in IC79 and older CLSim versions was 0.9, now it is 1.0
-                GCDFile=args.gcdfile,  # gcd_file,
+                GCDFile=args.gcdfile,  # gcd_file
                 )
 
-tray.AddModule("I3Writer", "writer",
-               # SkipKeys=SkipKeys,
-               Filename=args.outfile,
-               Streams=[icetray.I3Frame.DAQ, icetray.I3Frame.TrayInfo],
-               )
+#icetray.logging.I3Logger.global_logger.set_level_for_unit('clsim', icetray.logging.I3LogLevel.LOG_ERROR)
+#icetray.logging.I3Logger.global_logger.set_level_for_unit('I3CLSimStepToPhotonConverterOpenCL', icetray.logging.I3LogLevel.LOG_WARN)
 
-tray.AddModule("TrashCan", "adios")
+#tray.AddModule(PrintMessage,"print",message = "CLSiM Check")
+
+tray.AddModule("I3Writer","writer",
+#               SkipKeys=SkipKeys,
+               Filename =  outfile,
+               Streams = [icetray.I3Frame.TrayInfo, icetray.I3Frame.DAQ],
+              )
+
+tray.AddModule("TrashCan","adios")
 
 tray.Execute()
 tray.Finish()

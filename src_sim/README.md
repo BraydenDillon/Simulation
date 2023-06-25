@@ -1,13 +1,25 @@
-## Muon Event Simulation
+#### MuonGun Simulation
 
 **Step 1**:
-* Generate muon near dectector volume by run_muonpropagation.sh
+* Generate muon near dectector volume
+```.sh
+python submit_muon.py
+```
 
 **Step 2**:
-* Cherenkov photon propagation by run_propogatePhotons.sh
+* Cherenkov photon propagation
+```.sh
+python submit_photon.py
+```
 
 **Step 3**:
-* Simulate detector electronics by run_daqsimulation.sh
+* Simulate detector electronics
+```.sh
+python submit_daq.py
+```
 
 **Step 4**:
-* Do noise cleaning by run_pulse_cleaning.sh
+* Linefit Reconstruction
+```.sh
+python submit_daq.py
+```
