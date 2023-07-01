@@ -58,6 +58,7 @@ def make_seed(frame):
 tray.AddModule(make_seed, 'make_seed')
 
 PulsesName = "PMTResponse_nonoise"
+truthseed = "MCTruth_seed"
 
 tray.AddService(
     "I3GSLSimplexFactory",
@@ -152,6 +153,23 @@ tray.AddModule("I3SimpleFitter", "LLHFit_mmsreco",
         If = lambda frame: PulsesName in frame and "LLHFit_step4" in frame,
         OutputName = "LLHFit_mmsreco")
 
+#-------------------------------------------------------------
+tray.AddService("I3BasicSeedServiceFactory", "trueseed", FirstGuess=truthseed)
+
+tray.AddService("MMSLikelihoodFactory", "mmsreco_truth",
+                InputPulses=PulsesName,  ExpectNoise=True, ConvolutionWidth=0.0,
+                SplineTablePath="/data/p-one/twagiray/trackreco/src_mmsreco/mmsreco/water_sim0005.fits")
+
+tray.AddModule("I3SimpleFitter", "LLHFit_mctruth",
+        SeedService = "trueseed",
+        Parametrization = "simpleparam",
+        LogLikelihood = "mmsreco_truth",
+        Minimizer = "minimizeit", 
+        StoragePolicy = "OnlyBestFit",
+        If = lambda frame: PulsesName in frame and "MCTruth_seed" in frame,
+        OutputName = "LLHFit_mctruth")
+
+#-------------------------------------------------------------
 
 tray.Add("I3Writer", Filename = outfile,
         Streams=[icetray.I3Frame.DAQ, icetray.I3Frame.Physics],

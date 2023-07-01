@@ -91,6 +91,8 @@ tray.AddModule(get_angle, 'angular_splines_10ns', key1 = 'LLHFit_step3', key2 = 
 
 tray.AddModule(get_angle, 'angular_splines_05ns', key1 = 'LLHFit_step4', key2 = 'MCMuon')
 
+tray.AddModule(get_angle, 'angular_mctruth', key1 = 'LLHFit_mctruth', key2 = 'MCMuon')
+
 def get_energy(frame):
     frame['zenith_angle'] = dataclasses.I3Double(frame['MCMuon'].dir.zenith)
     frame['muon_energy'] = dataclasses.I3Double(frame['MCMuon'].energy)
@@ -100,6 +102,7 @@ def get_energy(frame):
     frame['logl_splines_10ns'] = dataclasses.I3Double(frame['LLHFit_step3FitParams'].logl)
     frame['logl_splines_05ns'] = dataclasses.I3Double(frame['LLHFit_step4FitParams'].logl)
     frame['logl_mmsreco'] = dataclasses.I3Double(frame['LLHFit_mmsrecoFitParams'].logl)
+    frame['logl_mctruth'] = dataclasses.I3Double(frame['LLHFit_mctruthFitParams'].logl)
     frame['event_id'] = dataclasses.I3Double(frame['I3EventHeader'].event_id)
     return True
 
@@ -120,10 +123,12 @@ tray.AddSegment(I3HDFWriter, 'hdfwriter',
          'angular_error_LLHFit_step2',
          'angular_error_LLHFit_step3',
          'angular_error_LLHFit_step4',
+         'angular_error_LLHFit_mctruth',
          'qtotal_clean', 'qtotal_unclean',
          'nhits_clean', 'nhits_unclean',
          'track_length', 'nchannels_count',
          'muon_energy', 'logl_mmsreco',
+         'logl_mctruth',
          'logl_splines_35ns',
          'logl_splines_20ns',
          'logl_splines_10ns',

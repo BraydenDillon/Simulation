@@ -6,19 +6,11 @@ Example script to generate MuonGun simualation and Reconstruction
 create the following directories in `sim0002`
 
 ```.sh
-mkdir -p daqfiles  eventfiles  gcdfile  linefit  photonfiles  reco_mctruth  reco_spline  src_mctruth  src_sim  src_spline
+mkdir -p daqfiles  eventfiles  gcdfile  linefit  photonfiles  reco_spline  src_sim  src_spline
 ```
 
 **src_sim**:
 scripts to generate MuoGun simulation
-
-```.sh
-mkdir -p error log out
-```
-
-**src_mctruth**:
-
-scripts run track reconstruction seeded with mctruth
 
 ```.sh
 mkdir -p error log out
