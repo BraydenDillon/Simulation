@@ -158,7 +158,7 @@ tray.AddService("I3BasicSeedServiceFactory", "trueseed", FirstGuess=truthseed)
 
 tray.AddService("MMSLikelihoodFactory", "mmsreco_truth",
                 InputPulses=PulsesName,  ExpectNoise=True, ConvolutionWidth=0.0,
-                SplineTablePath="/data/p-one/twagiray/trackreco/src_mmsreco/mmsreco/water_sim0005.fits")
+                SplineTablePath="/data/p-one/twagiray/trackreco/src_mmsreco/mmsreco/water.fits")
 
 tray.AddModule("I3SimpleFitter", "LLHFit_mctruth",
         SeedService = "trueseed",
