@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Creating output directories
-basedir=/home/users/bdillon/P-ONE/sim0002/book_hdf5
+basedir=/home/users/bdillon/P-ONE/sim0002/src_spline/book_hdf5
 
 mkdir -p $basedir/npx3-execs $basedir/npx3-logs $basedir/npx3-out $basedir/npx3-error
 

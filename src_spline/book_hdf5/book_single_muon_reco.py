@@ -11,32 +11,24 @@ import os
 from glob import glob
 
 import argparse
-parser = argparse.ArgumentParser()
 
-parser.add_argument("-i", "--infile", type=str, default="SingleMuon_100.i3.gz",
-                    help="input file (.i3 format)")
+parser = OptionParser()
+parser.allow_interspersed_args = True
 
-parser.add_argument("-r", "--runnumber", type=int, default="1",
-                    help="used as seed for random generator")
+parser.add_option("-i", "--infile",
+                  default="/home/users/bdillon/P-ONE/sim0002/reco_spline/selection/SingleMuon_100.i3.gz",
+                  dest="infile", help="input file (.i3 format)", type=str)
+parser.add_option("--outfile", default="single_muons_muongun_reco_spline_sim0002_waterfits_sim0004.hdf5", type=str,
+                  dest="outfile", help="output file (.hdf5 format)")
 
-parser.add_argument("--hdf5file", type=str, default="70_string_muon_gun_reco_spline_sim0002.hdf5",
-                    help="output file (.hdf5 format)")
+# parse cmd line args,
+(opts,args) = parser.parse_args()
 
-args = parser.parse_args()
+infiles = sorted(glob(opts.infile))
 
 tray = I3Tray()
 
-# Now fire up the random number generator with that seed
-randomService = phys_services.I3SPRNGRandomService(
-                seed = int(args.runnumber),
-               nstreams = int(4e7),
-                streamnum = int(args.runnumber))
-
-tray.context['I3RandomService'] = randomService
-
-infile = args.infile +str(args.runnumber)+".i3.gz"
-
-tray.AddModule('I3Reader', 'reader', FilenameList = [infile])
+tray.AddModule('I3Reader', 'reader', FilenameList = infiles)
 
 def get_nchannels_per_event(frame, pulse_key):
     pulsemap = frame[pulse_key]
@@ -102,21 +94,14 @@ def get_energy(frame):
     frame['logl_splines_10ns'] = dataclasses.I3Double(frame['LLHFit_step3FitParams'].logl)
     frame['logl_splines_05ns'] = dataclasses.I3Double(frame['LLHFit_step4FitParams'].logl)
     frame['logl_mmsreco'] = dataclasses.I3Double(frame['LLHFit_mmsrecoFitParams'].logl)
-    frame['logl_mctruth'] = dataclasses.I3Double(frame['LLHFit_mctruthFitParams'].logl)
+    #frame['logl_mctruth'] = dataclasses.I3Double(frame['LLHFit_mctruthFitParams'].logl)
     frame['event_id'] = dataclasses.I3Double(frame['I3EventHeader'].event_id)
     return True
 
 tray.AddModule(get_energy, 'get_energy')
 
-"""
-tray.AddModule("I3Writer", "EventWriter",
-	FileName = '70_string_muon_gun_reco_spline_sim0009.i3.gz',
-	Streams = [icetray.I3Frame.DAQ, icetray.I3Frame.Physics],
-    DropOrphanStreams=[icetray.I3Frame.DAQ])
-"""
-
 tray.AddSegment(I3HDFWriter, 'hdfwriter',
-	Output = args.hdf5file,
+	Output = opts.outfile,
 	keys = ['angular_error_linefit',
          'angular_error_LLHFit_mmsreco',
          'angular_error_LLHFit_step1',
@@ -133,7 +118,8 @@ tray.AddSegment(I3HDFWriter, 'hdfwriter',
          'logl_splines_20ns',
          'logl_splines_10ns',
          'logl_splines_05ns',
-         'event_id', 'zenith_angle']
+         'event_id', 'zenith_angle'],
+        #SubEventStreams=['fullevent',]
          )
 
 tray.Execute()
