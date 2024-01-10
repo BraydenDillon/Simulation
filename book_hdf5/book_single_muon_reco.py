@@ -11,24 +11,29 @@ import os
 from glob import glob
 
 import argparse
+parser = argparse.ArgumentParser()
 
-parser = OptionParser()
-parser.allow_interspersed_args = True
-
-parser.add_option("-i", "--infile",
-                  default="/home/users/bdillon/P-ONE/sim0002/reco_spline/selection/SingleMuon_100.i3.gz",
+parser.add_argument("-i", "--infile", default="/data/p-one/sim/muongun/sim0011/reco_spline/SingleMuon_*_reco_selection.i3.gz",
                   dest="infile", help="input file (.i3 format)", type=str)
-parser.add_option("--outfile", default="single_muons_muongun_reco_spline_sim0002_waterfits_sim0004.hdf5", type=str,
-                  dest="outfile", help="output file (.hdf5 format)")
+parser.add_argument("-o", "--hdf5file", default="muon_gun_reco_spline_mctruth_sim0011_water_fits_3ns.hdf5", type=str,
+                  dest="hdf5file", help="output file (.hdf5 format)")
 
 # parse cmd line args,
-(opts,args) = parser.parse_args()
+args = parser.parse_args()
 
-infiles = sorted(glob(opts.infile))
+infiles = sorted(glob(args.infile))
 
 tray = I3Tray()
 
 tray.AddModule('I3Reader', 'reader', FilenameList = infiles)
+
+def get_mcmuon(frame):
+    mctree = frame["I3MCTree"]
+    primary = mctree.primaries[0]
+    muon = mctree.get_daughters(primary)[0]
+    frame["MCMuon"] = muon
+    return True
+tray.AddModule(get_mcmuon, 'get_mcmuon')
 
 def get_nchannels_per_event(frame, pulse_key):
     pulsemap = frame[pulse_key]
@@ -66,60 +71,19 @@ tray.AddModule(qtotal_nhits_event, 'qtotal_nhits_unclean',
 tray.AddModule(qtotal_nhits_event, 'qtotal_nhits_clean', 
                pulse_key='PMTResponse_nonoise', key_name='clean')
 
-def get_angle(frame, key1, key2):
-    angular_error = phys_services.I3Calculator.angle(frame[key1], frame[key2])
-    frame["angular_error_"+key1] = dataclasses.I3Double(angular_error)
-    return True
-
-tray.AddModule(get_angle, 'angular_linefit', key1 = 'linefit', key2 = 'MCMuon')
-
-tray.AddModule(get_angle, 'angular_mmsreco', key1 = 'LLHFit_mmsreco', key2 = 'MCMuon')
-
-tray.AddModule(get_angle, 'angular_splines_35ns', key1 = 'LLHFit_step1', key2 = 'MCMuon')
-
-tray.AddModule(get_angle, 'angular_splines_20ns', key1 = 'LLHFit_step2', key2 = 'MCMuon')
-
-tray.AddModule(get_angle, 'angular_splines_10ns', key1 = 'LLHFit_step3', key2 = 'MCMuon')
-
-tray.AddModule(get_angle, 'angular_splines_05ns', key1 = 'LLHFit_step4', key2 = 'MCMuon')
-
-tray.AddModule(get_angle, 'angular_mctruth', key1 = 'LLHFit_mctruth', key2 = 'MCMuon')
-
-def get_energy(frame):
-    frame['zenith_angle'] = dataclasses.I3Double(frame['MCMuon'].dir.zenith)
-    frame['muon_energy'] = dataclasses.I3Double(frame['MCMuon'].energy)
-    frame['track_length'] = dataclasses.I3Double(frame['LLHFit_mmsrecoDirectHitsA'].dir_track_length)
-    frame['logl_splines_35ns'] = dataclasses.I3Double(frame['LLHFit_step1FitParams'].logl)
-    frame['logl_splines_20ns'] = dataclasses.I3Double(frame['LLHFit_step2FitParams'].logl)
-    frame['logl_splines_10ns'] = dataclasses.I3Double(frame['LLHFit_step3FitParams'].logl)
-    frame['logl_splines_05ns'] = dataclasses.I3Double(frame['LLHFit_step4FitParams'].logl)
-    frame['logl_mmsreco'] = dataclasses.I3Double(frame['LLHFit_mmsrecoFitParams'].logl)
-    #frame['logl_mctruth'] = dataclasses.I3Double(frame['LLHFit_mctruthFitParams'].logl)
-    frame['event_id'] = dataclasses.I3Double(frame['I3EventHeader'].event_id)
-    return True
-
-tray.AddModule(get_energy, 'get_energy')
-
 tray.AddSegment(I3HDFWriter, 'hdfwriter',
-	Output = opts.outfile,
-	keys = ['angular_error_linefit',
-         'angular_error_LLHFit_mmsreco',
-         'angular_error_LLHFit_step1',
-         'angular_error_LLHFit_step2',
-         'angular_error_LLHFit_step3',
-         'angular_error_LLHFit_step4',
-         'angular_error_LLHFit_mctruth',
+	Output = args.hdf5file,
+	keys = ['I3EventHeader', 'linefit', 'MCMuon',
+         #'LLHFit_mmsreco', 'LLHFit_mmsrecoFitParams',
+         #'LLHFit_step1', 'LLHFit_step1FitParams',
+         #'LLHFit_step2', 'LLHFit_step2FitParams',
+         #'LLHFit_step3', 'LLHFit_step3FitParams',
+         #'LLHFit_step4', 'LLHFit_step4FitParams',
+         'LLHFit_mctruth', 'LLHFit_mctruthFitParams',
+         'LLHFit_mctruthDirectHitsA',
          'qtotal_clean', 'qtotal_unclean',
          'nhits_clean', 'nhits_unclean',
-         'track_length', 'nchannels_count',
-         'muon_energy', 'logl_mmsreco',
-         'logl_mctruth',
-         'logl_splines_35ns',
-         'logl_splines_20ns',
-         'logl_splines_10ns',
-         'logl_splines_05ns',
-         'event_id', 'zenith_angle'],
-        #SubEventStreams=['fullevent',]
+         'nchannels_count']#, SubEventStreams = ['fullevent',]
          )
 
 tray.Execute()
