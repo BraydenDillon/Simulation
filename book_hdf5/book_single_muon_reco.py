@@ -13,9 +13,9 @@ from glob import glob
 import argparse
 parser = argparse.ArgumentParser()
 
-parser.add_argument("-i", "--infile", default="/data/p-one/sim/muongun/sim0011/reco_spline/SingleMuon_*_reco_selection.i3.gz",
+parser.add_argument("-i", "--infile", default="/home/users/bdillon/P-ONE/sim0002/reco_spline/selection/SingleMuon_*.i3.gz",
                   dest="infile", help="input file (.i3 format)", type=str)
-parser.add_argument("-o", "--hdf5file", default="muon_gun_reco_spline_mctruth_sim0011_water_fits_3ns.hdf5", type=str,
+parser.add_argument("-o", "--hdf5file", default="muongun_booking_test.hdf5", type=str,
                   dest="hdf5file", help="output file (.hdf5 format)")
 
 # parse cmd line args,
@@ -73,17 +73,13 @@ tray.AddModule(qtotal_nhits_event, 'qtotal_nhits_clean',
 
 tray.AddSegment(I3HDFWriter, 'hdfwriter',
 	Output = args.hdf5file,
-	keys = ['I3EventHeader', 'linefit', 'MCMuon',
-         #'LLHFit_mmsreco', 'LLHFit_mmsrecoFitParams',
-         #'LLHFit_step1', 'LLHFit_step1FitParams',
-         #'LLHFit_step2', 'LLHFit_step2FitParams',
-         #'LLHFit_step3', 'LLHFit_step3FitParams',
-         #'LLHFit_step4', 'LLHFit_step4FitParams',
+	keys = ['I3EventHeader', 'linefit',
+         'MCMuon', 'MuonEffectiveArea',
          'LLHFit_mctruth', 'LLHFit_mctruthFitParams',
          'LLHFit_mctruthDirectHitsA',
          'qtotal_clean', 'qtotal_unclean',
          'nhits_clean', 'nhits_unclean',
-         'nchannels_count']#, SubEventStreams = ['fullevent',]
+         'nchannels_count'] #, SubEventStreams = ['fullevent',]
          )
 
 tray.Execute()
